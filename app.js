@@ -123,6 +123,16 @@
     return a === b;
   }
 
+  // Inclusive ranges: [12,16] and [16,18] overlap, [12,16] and [17,18] do not.
+  function overlaps(a, b) { return a[0] <= b[1] && b[0] <= a[1]; }
+
+  function clashes(val, chosen) {
+    for (var i = 0; i < chosen.length; i++) {
+      if (overlaps(val, chosen[i].value)) return true;
+    }
+    return false;
+  }
+
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function shuffle(arr) {
@@ -147,17 +157,21 @@
   // -------------------------------------------------------------- question gen
 
   var TIERS = [
-    { name: "Easy", max: 0.30, affinity: "far" },
-    { name: "Medium", max: 0.55, affinity: "mid" },
-    { name: "Hard", max: 0.78, affinity: "near" },
+    { name: "Easy", max: 0.12, affinity: "far" },
+    { name: "Medium", max: 0.45, affinity: "mid" },
+    { name: "Hard", max: 0.72, affinity: "near" },
     { name: "Brutal", max: 1.01, affinity: "near" }
   ];
 
+  // Concrete, few-valued attributes read as easier than coat texture or a
+  // one-line trait, so the opening tier leans on them.
+  var EASY_CATEGORIES = ["s", "g", "o", "t"];
+
   function tierForStreak(streak) {
-    if (streak < 4) return 0;
-    if (streak < 10) return 1;
-    if (streak < 20) return 2;
-    // Past 20, mostly brutal with the odd breather.
+    if (streak < 6) return 0;
+    if (streak < 13) return 1;
+    if (streak < 22) return 2;
+    // Past 22, mostly brutal with the odd breather.
     return Math.random() < 0.75 ? 3 : 2;
   }
 
@@ -175,6 +189,12 @@
 
     // Prefer a category that actually has usable distractors.
     var cats = shuffle(CATEGORIES.slice());
+    if (tierIdx === 0) {
+      cats.sort(function (a, b) {
+        return (EASY_CATEGORIES.indexOf(a.key) === -1 ? 1 : 0) -
+          (EASY_CATEGORIES.indexOf(b.key) === -1 ? 1 : 0);
+      });
+    }
     var chosen = null;
     for (var i = 0; i < cats.length && !chosen; i++) {
       var built = buildOptions(subject, cats[i], tier);
@@ -194,6 +214,11 @@
   function buildOptions(subject, cat, tier) {
     var correct = subject[cat.key];
 
+    // Weight and lifespan are ranges. Two ranges that share any value make for an
+    // ambiguous question — "12–16 years" against "13–16 years" has no clean answer —
+    // so every numeric option must be fully disjoint from every other.
+    var numeric = cat.key === "w" || cat.key === "l";
+
     // Candidate pool: values from other breeds that genuinely differ.
     var pool = [];
     var seen = [];
@@ -202,6 +227,7 @@
       if (other === subject) continue;
       var val = other[cat.key];
       if (sameValue(cat, val, correct)) continue;
+      if (numeric && overlaps(val, correct)) continue;
 
       var label = cat.fmt(val);
       if (seen.indexOf(label) !== -1) continue;
@@ -227,10 +253,20 @@
       return sa - sb;
     });
 
-    // Sample from a window near the front so repeats don't feel canned.
-    var window_ = pool.slice(0, Math.max(3, Math.min(pool.length, 14)));
-    shuffle(window_);
-    var decoys = window_.slice(0, 3);
+    // Sample from a window near the front so repeats don't feel canned, then fall
+    // back down the sorted tail if the disjoint rule rejects too much of the window.
+    // The window has to stay a fraction of the pool: size offers only four possible
+    // decoys, and shuffling all of them would throw the difficulty ordering away.
+    var head = pool.slice(0, Math.max(3, Math.min(pool.length, Math.ceil(pool.length * 0.4), 14)));
+    shuffle(head);
+    var ordered = head.concat(pool.slice(head.length));
+
+    var decoys = [];
+    for (i = 0; i < ordered.length && decoys.length < 3; i++) {
+      if (numeric && clashes(ordered[i].value, decoys)) continue;
+      decoys.push(ordered[i]);
+    }
+    if (decoys.length < 3) return null;
 
     var options = decoys.map(function (d) {
       return { label: d.label, correct: false, owner: d.owner };

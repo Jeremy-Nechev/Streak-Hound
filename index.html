@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streak Hound — the dog breed attribute quiz</title>
+<meta name="description" content="Name the right attribute for over 150 dog breeds. Three of the four answers belong to a different breed. Build the longest streak you can.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐕</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">🐕 <span>Streak&nbsp;Hound</span></div>
+  <dl class="scores">
+    <div><dt>Streak</dt><dd id="streak">0</dd></div>
+    <div><dt>Best</dt><dd id="best">0</dd></div>
+    <div><dt>Answered</dt><dd id="answered">0</dd></div>
+    <div><dt>Accuracy</dt><dd id="accuracy">—</dd></div>
+  </dl>
+</header>
+
+<main>
+
+  <section id="intro" class="card intro">
+    <h1>How well do you know your dogs?</h1>
+    <p>You get a breed. Pick the attribute that actually belongs to it — its origin, group,
+      size, coat, weight, lifespan, or signature trait. The other three answers are real,
+      but they belong to <em>other</em> breeds.</p>
+    <p>One wrong answer and your streak drops to zero. Questions get harder the longer you
+      survive: the decoys start obvious and end up nearly indistinguishable.</p>
+    <p class="meta"><strong id="breed-count">0</strong> breeds in the pool · keys
+      <kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> to answer, <kbd>Enter</kbd> to continue</p>
+    <button id="start" class="primary" type="button">Start the run</button>
+  </section>
+
+  <section id="game" class="card" hidden>
+    <div class="breed-head">
+      <span id="tier" class="tier tier-0">Easy</span>
+      <h2 id="breed">—</h2>
+    </div>
+    <p id="prompt" class="prompt">—</p>
+    <div id="options" class="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next" class="primary" type="button" hidden>Next breed →</button>
+  </section>
+
+</main>
+
+<footer>
+  <p>Breed data compiled from standard breed-club descriptions; weights and lifespans are
+    typical ranges, not guarantees. Built as a static site — no tracking, scores stay in your browser.</p>
+</footer>
+
+<script src="data/breeds.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

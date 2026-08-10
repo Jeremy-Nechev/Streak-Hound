@@ -1,0 +1,380 @@
+/* Streak Hound — dog breed attribute quiz.
+ * One breed per question, four attribute options, three of which belong to other breeds.
+ * A wrong answer resets the streak to zero.
+ */
+(function () {
+  "use strict";
+
+  var BREEDS = window.BREEDS;
+
+  // ---------------------------------------------------------------- constants
+
+  var SIZE_ORDER = ["Toy", "Small", "Medium", "Large", "Giant"];
+
+  // Rough geographic clustering, used to judge how "close" two origins feel.
+  var REGION = {
+    "England": "brit", "Scotland": "brit", "Wales": "brit", "Ireland": "brit",
+    "France": "weur", "Belgium": "weur", "Netherlands": "weur", "Germany": "weur",
+    "Switzerland": "weur", "Italy": "weur", "Spain": "weur", "Portugal": "weur", "Malta": "weur",
+    "Hungary": "eeur", "Czech Republic": "eeur", "Croatia": "eeur", "Russia": "eeur",
+    "Norway": "nord", "Sweden": "nord", "Finland": "nord", "Iceland": "nord",
+    "United States": "namer", "Canada": "namer", "Mexico": "namer",
+    "Peru": "samer",
+    "China": "easia", "Japan": "easia", "South Korea": "easia", "Tibet": "easia", "Thailand": "easia",
+    "Turkey": "wasia", "Israel": "wasia", "Iran": "wasia", "Afghanistan": "wasia",
+    "Morocco": "afr", "Mali": "afr", "Zimbabwe": "afr", "Madagascar": "afr",
+    "Democratic Republic of the Congo": "afr",
+    "Australia": "oce", "Cuba": "namer"
+  };
+
+  var CATEGORIES = [
+    {
+      key: "o",
+      label: "origin",
+      ask: function (b) { return "Where was the " + b.n + " developed?"; },
+      fmt: function (v) { return v; },
+      reveal: function (b) { return "The " + b.n + " was developed in " + b.o + "."; },
+      // 0 = very different, 1 = nearly identical
+      near: function (a, b) {
+        if (a === b) return 1;
+        return REGION[a] && REGION[a] === REGION[b] ? 0.75 : 0.1;
+      }
+    },
+    {
+      key: "g",
+      label: "breed group",
+      ask: function (b) { return "Which group does the " + b.n + " belong to?"; },
+      fmt: function (v) { return v + " group"; },
+      reveal: function (b) { return "The " + b.n + " is in the " + b.g + " group."; },
+      near: function (a, b) { return a === b ? 1 : 0.2; }
+    },
+    {
+      key: "s",
+      label: "size class",
+      ask: function (b) { return "What size class is the " + b.n + "?"; },
+      fmt: function (v) { return v; },
+      reveal: function (b) { return "The " + b.n + " is a " + b.s + " breed."; },
+      near: function (a, b) {
+        var d = Math.abs(SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b));
+        return 1 - d / (SIZE_ORDER.length - 1);
+      }
+    },
+    {
+      key: "c",
+      label: "coat type",
+      ask: function (b) { return "What kind of coat does the " + b.n + " have?"; },
+      fmt: function (v) { return v; },
+      reveal: function (b) { return "The " + b.n + "’s coat is " + lower(b.c) + "."; },
+      near: function (a, b) { return tokenOverlap(a, b); }
+    },
+    {
+      key: "w",
+      label: "adult weight",
+      ask: function (b) { return "What is the typical adult weight of the " + b.n + "?"; },
+      fmt: function (v) { return v[0] + "–" + v[1] + " lb"; },
+      reveal: function (b) { return "The " + b.n + " typically weighs " + b.w[0] + "–" + b.w[1] + " lb."; },
+      near: function (a, b) {
+        var am = (a[0] + a[1]) / 2, bm = (b[0] + b[1]) / 2;
+        return 1 - Math.min(1, Math.abs(am - bm) / 90);
+      }
+    },
+    {
+      key: "l",
+      label: "lifespan",
+      ask: function (b) { return "What is the typical lifespan of the " + b.n + "?"; },
+      fmt: function (v) { return v[0] + "–" + v[1] + " years"; },
+      reveal: function (b) { return "The " + b.n + " typically lives " + b.l[0] + "–" + b.l[1] + " years."; },
+      near: function (a, b) {
+        var am = (a[0] + a[1]) / 2, bm = (b[0] + b[1]) / 2;
+        return 1 - Math.min(1, Math.abs(am - bm) / 7);
+      }
+    },
+    {
+      key: "t",
+      label: "signature trait",
+      ask: function (b) { return "Which trait belongs to the " + b.n + "?"; },
+      fmt: function (v) { return v; },
+      reveal: function (b) { return "The real trait of the " + b.n + ": " + b.t + "."; },
+      near: function (a, b) { return tokenOverlap(a, b); }
+    }
+  ];
+
+  // Lowercase a leading word only when it is not a proper noun we care about.
+  function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+
+  var STOP = { "and": 1, "the": 1, "with": 1, "a": 1, "of": 1, "over": 1, "in": 1, "on": 1, "its": 1, "that": 1, "for": 1, "an": 1 };
+
+  function tokenOverlap(a, b) {
+    var A = tokens(a), B = tokens(b), hit = 0, i;
+    if (!A.length || !B.length) return 0;
+    for (i = 0; i < A.length; i++) if (B.indexOf(A[i]) !== -1) hit++;
+    return hit / Math.max(A.length, B.length);
+  }
+
+  function tokens(s) {
+    return String(s).toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/)
+      .filter(function (w) { return w.length > 2 && !STOP[w]; });
+  }
+
+  // ------------------------------------------------------------------- helpers
+
+  function sameValue(cat, a, b) {
+    if (cat.key === "w" || cat.key === "l") return a[0] === b[0] && a[1] === b[1];
+    return a === b;
+  }
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  // How alike two breeds are overall — drives how cruel the distractors feel.
+  function breedAffinity(a, b) {
+    var score = 0;
+    if (a.g === b.g) score += 2;
+    if (a.s === b.s) score += 1.5;
+    if (REGION[a.o] === REGION[b.o]) score += 1;
+    if (a.o === b.o) score += 1;
+    score += tokenOverlap(a.c, b.c) * 1.5;
+    return score;
+  }
+
+  // -------------------------------------------------------------- question gen
+
+  var TIERS = [
+    { name: "Easy", max: 0.30, affinity: "far" },
+    { name: "Medium", max: 0.55, affinity: "mid" },
+    { name: "Hard", max: 0.78, affinity: "near" },
+    { name: "Brutal", max: 1.01, affinity: "near" }
+  ];
+
+  function tierForStreak(streak) {
+    if (streak < 4) return 0;
+    if (streak < 10) return 1;
+    if (streak < 20) return 2;
+    // Past 20, mostly brutal with the odd breather.
+    return Math.random() < 0.75 ? 3 : 2;
+  }
+
+  var recentBreeds = [];
+
+  function nextQuestion(streak) {
+    var tierIdx = tierForStreak(streak);
+    var tier = TIERS[tierIdx];
+
+    var subject = pick(BREEDS);
+    var guard = 0;
+    while (recentBreeds.indexOf(subject.n) !== -1 && guard++ < 40) subject = pick(BREEDS);
+    recentBreeds.push(subject.n);
+    if (recentBreeds.length > Math.min(25, Math.floor(BREEDS.length / 4))) recentBreeds.shift();
+
+    // Prefer a category that actually has usable distractors.
+    var cats = shuffle(CATEGORIES.slice());
+    var chosen = null;
+    for (var i = 0; i < cats.length && !chosen; i++) {
+      var built = buildOptions(subject, cats[i], tier);
+      if (built) chosen = { cat: cats[i], options: built };
+    }
+    if (!chosen) return nextQuestion(streak); // vanishingly unlikely
+
+    return {
+      breed: subject,
+      category: chosen.cat,
+      options: chosen.options,
+      tier: tier.name,
+      tierIndex: tierIdx
+    };
+  }
+
+  function buildOptions(subject, cat, tier) {
+    var correct = subject[cat.key];
+
+    // Candidate pool: values from other breeds that genuinely differ.
+    var pool = [];
+    var seen = [];
+    for (var i = 0; i < BREEDS.length; i++) {
+      var other = BREEDS[i];
+      if (other === subject) continue;
+      var val = other[cat.key];
+      if (sameValue(cat, val, correct)) continue;
+
+      var label = cat.fmt(val);
+      if (seen.indexOf(label) !== -1) continue;
+      seen.push(label);
+
+      pool.push({
+        value: val,
+        label: label,
+        owner: other,
+        near: cat.near(correct, val),          // similarity of the value itself
+        affinity: breedAffinity(subject, other) // similarity of the source breed
+      });
+    }
+    if (pool.length < 3) return null;
+
+    // Difficulty = how close the decoys sit to the truth.
+    var wantNear = tier.max;
+    pool.sort(function (a, b) {
+      var sa = Math.abs(a.near - wantNear) - (tier.affinity === "near" ? a.affinity * 0.04 : 0)
+        + (tier.affinity === "far" ? a.affinity * 0.04 : 0);
+      var sb = Math.abs(b.near - wantNear) - (tier.affinity === "near" ? b.affinity * 0.04 : 0)
+        + (tier.affinity === "far" ? b.affinity * 0.04 : 0);
+      return sa - sb;
+    });
+
+    // Sample from a window near the front so repeats don't feel canned.
+    var window_ = pool.slice(0, Math.max(3, Math.min(pool.length, 14)));
+    shuffle(window_);
+    var decoys = window_.slice(0, 3);
+
+    var options = decoys.map(function (d) {
+      return { label: d.label, correct: false, owner: d.owner };
+    });
+    options.push({ label: cat.fmt(correct), correct: true, owner: subject });
+    return shuffle(options);
+  }
+
+  // ------------------------------------------------------------------- game UI
+
+  var el = {
+    intro: document.getElementById("intro"),
+    game: document.getElementById("game"),
+    start: document.getElementById("start"),
+    breed: document.getElementById("breed"),
+    prompt: document.getElementById("prompt"),
+    options: document.getElementById("options"),
+    feedback: document.getElementById("feedback"),
+    next: document.getElementById("next"),
+    streak: document.getElementById("streak"),
+    best: document.getElementById("best"),
+    answered: document.getElementById("answered"),
+    accuracy: document.getElementById("accuracy"),
+    tier: document.getElementById("tier"),
+    count: document.getElementById("breed-count")
+  };
+
+  var state = {
+    streak: 0,
+    best: Number(localStorage.getItem("streakhound.best") || 0),
+    asked: 0,
+    right: 0,
+    current: null,
+    locked: false
+  };
+
+  function paintStats() {
+    el.streak.textContent = state.streak;
+    el.best.textContent = state.best;
+    el.answered.textContent = state.asked;
+    el.accuracy.textContent = state.asked ? Math.round((state.right / state.asked) * 100) + "%" : "—";
+  }
+
+  function render() {
+    state.current = nextQuestion(state.streak);
+    state.locked = false;
+
+    var q = state.current;
+    el.breed.textContent = q.breed.n;
+    el.prompt.textContent = q.category.ask(q.breed);
+    el.tier.textContent = q.tier;
+    el.tier.className = "tier tier-" + q.tierIndex;
+
+    el.feedback.className = "feedback";
+    el.feedback.innerHTML = "";
+    el.next.hidden = true;
+
+    el.options.innerHTML = "";
+    q.options.forEach(function (opt, i) {
+      var b = document.createElement("button");
+      b.className = "option";
+      b.type = "button";
+      b.innerHTML = '<span class="key">' + "ABCD"[i] + '</span><span class="text"></span>';
+      b.querySelector(".text").textContent = opt.label;
+      b.addEventListener("click", function () { answer(opt, b); });
+      el.options.appendChild(b);
+    });
+
+    paintStats();
+  }
+
+  function answer(opt, button) {
+    if (state.locked) return;
+    state.locked = true;
+    state.asked++;
+
+    var q = state.current;
+    var buttons = Array.prototype.slice.call(el.options.children);
+    buttons.forEach(function (b, i) {
+      b.disabled = true;
+      if (q.options[i].correct) b.classList.add("right");
+    });
+
+    if (opt.correct) {
+      state.right++;
+      state.streak++;
+      if (state.streak > state.best) {
+        state.best = state.streak;
+        localStorage.setItem("streakhound.best", String(state.best));
+      }
+      el.feedback.className = "feedback good";
+      el.feedback.innerHTML = "<strong>Correct.</strong> " + escapeHtml(q.breed.n) + " — " +
+        escapeHtml(q.breed.t) + ".";
+    } else {
+      button.classList.add("wrong");
+      el.feedback.className = "feedback bad";
+      var lost = state.streak;
+      el.feedback.innerHTML = "<strong>Wrong.</strong> “" + escapeHtml(opt.label) + "” is the " +
+        escapeHtml(q.category.label) + " of the <em>" + escapeHtml(opt.owner.n) + "</em>. " +
+        escapeHtml(q.category.reveal(q.breed)) +
+        (lost > 0 ? " <strong>Streak of " + lost + " lost.</strong>" : "");
+      state.streak = 0;
+    }
+
+    paintStats();
+    el.next.hidden = false;
+    el.next.focus();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  // ----------------------------------------------------------------- listeners
+
+  el.start.addEventListener("click", function () {
+    el.intro.hidden = true;
+    el.game.hidden = false;
+    render();
+  });
+
+  el.next.addEventListener("click", render);
+
+  document.addEventListener("keydown", function (e) {
+    if (el.game.hidden) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.start.click(); }
+      return;
+    }
+    var k = e.key.toLowerCase();
+    if (!state.locked) {
+      var idx = ["a", "b", "c", "d"].indexOf(k);
+      if (idx === -1) idx = ["1", "2", "3", "4"].indexOf(k);
+      if (idx !== -1 && el.options.children[idx]) {
+        e.preventDefault();
+        el.options.children[idx].click();
+      }
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      render();
+    }
+  });
+
+  el.count.textContent = BREEDS.length;
+  el.best.textContent = state.best;
+})();

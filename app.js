@@ -253,7 +253,6 @@
     streak: document.getElementById("streak"),
     best: document.getElementById("best"),
     answered: document.getElementById("answered"),
-    accuracy: document.getElementById("accuracy"),
     tier: document.getElementById("tier"),
     count: document.getElementById("breed-count")
   };
@@ -262,7 +261,6 @@
     streak: 0,
     best: Number(localStorage.getItem("streakhound.best") || 0),
     asked: 0,
-    right: 0,
     current: null,
     locked: false
   };
@@ -271,7 +269,6 @@
     el.streak.textContent = state.streak;
     el.best.textContent = state.best;
     el.answered.textContent = state.asked;
-    el.accuracy.textContent = state.asked ? Math.round((state.right / state.asked) * 100) + "%" : "—";
   }
 
   function render() {
@@ -315,7 +312,6 @@
     });
 
     if (opt.correct) {
-      state.right++;
       state.streak++;
       if (state.streak > state.best) {
         state.best = state.streak;

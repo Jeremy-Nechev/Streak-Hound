@@ -174,3 +174,24 @@ window.BREEDS = [
   { n: "Pumi", o: "Hungary", g: "Herding", s: "Medium", c: "Curly & corkscrewed", w: [22, 29], l: [12, 13], t: "Corkscrew curls with ears that tip forward at the tips" },
   { n: "Entlebucher Mountain Dog", o: "Switzerland", g: "Herding", s: "Medium", c: "Short & hard double", w: [40, 65], l: [11, 13], t: "Smallest of the four Swiss mountain dogs, tricolor and squarely built" }
 ];
+
+/* Breeds a casual player can be expected to recognize on sight. The opening tier
+ * draws its subjects only from these — no amount of obvious decoys makes a question
+ * about a Cirneco dell'Etna a gentle one. Names must match `n` above exactly.
+ */
+window.FAMILIAR_BREEDS = [
+  "Labrador Retriever", "German Shepherd", "Golden Retriever", "French Bulldog",
+  "Bulldog", "Standard Poodle", "Beagle", "Rottweiler", "Dachshund",
+  "Pembroke Welsh Corgi", "Australian Shepherd", "Yorkshire Terrier", "Boxer",
+  "Doberman Pinscher", "Great Dane", "Siberian Husky", "Bernese Mountain Dog",
+  "Shih Tzu", "Pomeranian", "Chihuahua", "Maltese", "Rough Collie", "Dalmatian",
+  "Pug", "Greyhound", "Border Collie", "Saint Bernard", "Newfoundland",
+  "Shiba Inu", "Akita", "Alaskan Malamute", "Samoyed", "Chow Chow",
+  "Boston Terrier", "Bichon Frise", "Basset Hound", "Bloodhound",
+  "Cavalier King Charles Spaniel", "Miniature Schnauzer", "Australian Cattle Dog",
+  "Great Pyrenees", "Weimaraner", "Irish Setter", "English Cocker Spaniel",
+  "West Highland White Terrier", "Bull Terrier", "Whippet", "Vizsla", "Mastiff",
+  "Cane Corso", "Belgian Malinois", "Papillon", "Pekingese", "Chinese Shar-Pei",
+  "Havanese", "Shetland Sheepdog", "English Springer Spaniel",
+  "German Shorthaired Pointer"
+];

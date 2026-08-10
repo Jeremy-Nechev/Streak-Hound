@@ -156,23 +156,37 @@
 
   // -------------------------------------------------------------- question gen
 
+  /* max      — the similarity the decoys aim for; 0 means as unlike the truth as possible
+   * affinity  — whether decoys should come from similar or dissimilar breeds
+   * familiar  — restrict the subject to breeds a casual player will recognize
+   * cats      — restrict the question to these attributes, if any can be built
+   *
+   * Starter asks only about size and signature trait. Both are answerable by
+   * reasoning about a dog you have seen: everyone knows a Great Dane is Giant.
+   * Group is left out because it needs kennel-club knowledge, and origin because
+   * it hides traps — the Standard Poodle is German and the Australian Shepherd
+   * is American, which is no way to end a beginner's first streak.
+   */
   var TIERS = [
-    { name: "Easy", max: 0.12, affinity: "far" },
+    { name: "Starter", max: 0.00, affinity: "far", familiar: true, cats: ["s", "t"] },
+    { name: "Easy", max: 0.15, affinity: "far", cats: ["s", "g", "o", "t"] },
     { name: "Medium", max: 0.45, affinity: "mid" },
     { name: "Hard", max: 0.72, affinity: "near" },
     { name: "Brutal", max: 1.01, affinity: "near" }
   ];
 
-  // Concrete, few-valued attributes read as easier than coat texture or a
-  // one-line trait, so the opening tier leans on them.
-  var EASY_CATEGORIES = ["s", "g", "o", "t"];
+  var FAMILIAR = (window.FAMILIAR_BREEDS || []).map(function (name) {
+    for (var i = 0; i < BREEDS.length; i++) if (BREEDS[i].n === name) return BREEDS[i];
+    return null;
+  }).filter(Boolean);
 
   function tierForStreak(streak) {
-    if (streak < 6) return 0;
-    if (streak < 13) return 1;
-    if (streak < 22) return 2;
-    // Past 22, mostly brutal with the odd breather.
-    return Math.random() < 0.75 ? 3 : 2;
+    if (streak < 3) return 0;
+    if (streak < 8) return 1;
+    if (streak < 15) return 2;
+    if (streak < 24) return 3;
+    // Past 24, mostly brutal with the odd breather.
+    return Math.random() < 0.75 ? 4 : 3;
   }
 
   var recentBreeds = [];
@@ -181,19 +195,22 @@
     var tierIdx = tierForStreak(streak);
     var tier = TIERS[tierIdx];
 
-    var subject = pick(BREEDS);
+    var from = tier.familiar && FAMILIAR.length >= 8 ? FAMILIAR : BREEDS;
+    var subject = pick(from);
     var guard = 0;
-    while (recentBreeds.indexOf(subject.n) !== -1 && guard++ < 40) subject = pick(BREEDS);
+    while (recentBreeds.indexOf(subject.n) !== -1 && guard++ < 40) subject = pick(from);
     recentBreeds.push(subject.n);
-    if (recentBreeds.length > Math.min(25, Math.floor(BREEDS.length / 4))) recentBreeds.shift();
+    if (recentBreeds.length > Math.min(25, Math.floor(from.length / 4))) recentBreeds.shift();
 
-    // Prefer a category that actually has usable distractors.
+    // Prefer a category that actually has usable distractors, and honour the tier's
+    // shortlist first — falling through to the rest only if none of them can build.
     var cats = shuffle(CATEGORIES.slice());
-    if (tierIdx === 0) {
-      cats.sort(function (a, b) {
-        return (EASY_CATEGORIES.indexOf(a.key) === -1 ? 1 : 0) -
-          (EASY_CATEGORIES.indexOf(b.key) === -1 ? 1 : 0);
+    if (tier.cats) {
+      var wanted = [], others = [];
+      cats.forEach(function (c) {
+        (tier.cats.indexOf(c.key) === -1 ? others : wanted).push(c);
       });
+      cats = wanted.concat(others);
     }
     var chosen = null;
     for (var i = 0; i < cats.length && !chosen; i++) {

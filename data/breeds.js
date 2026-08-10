@@ -10,11 +10,14 @@ window.BREEDS = [
   { n: "French Bulldog", o: "France", g: "Non-Sporting", s: "Small", c: "Short & smooth", w: [16, 28], l: [10, 12], t: "Erect rounded bat ears" },
   { n: "Bulldog", o: "England", g: "Non-Sporting", s: "Medium", c: "Short & smooth", w: [40, 50], l: [8, 10], t: "Pushed-in nose with heavy hanging jowls" },
   { n: "Standard Poodle", o: "Germany", g: "Non-Sporting", s: "Large", c: "Dense & curly", w: [40, 70], l: [10, 18], t: "Curly single coat traditionally shown in a continental clip" },
+  { n: "Miniature Poodle", o: "Germany", g: "Non-Sporting", s: "Small", c: "Dense & curly", w: [10, 15], l: [10, 18], t: "Mid-sized Poodle variety, standing 10 to 15 inches at the shoulder" },
+  { n: "Toy Poodle", o: "Germany", g: "Toy", s: "Toy", c: "Dense & curly", w: [4, 6], l: [10, 18], t: "Smallest of the three Poodle varieties, standing under 10 inches" },
   { n: "Beagle", o: "England", g: "Hound", s: "Small", c: "Short & dense double", w: [20, 30], l: [10, 15], t: "White-tipped tail that stays visible above tall grass" },
   { n: "Rottweiler", o: "Germany", g: "Working", s: "Large", c: "Short & dense double", w: [80, 135], l: [9, 10], t: "Black coat with clearly defined rust eyebrow markings" },
   { n: "German Shorthaired Pointer", o: "Germany", g: "Sporting", s: "Large", c: "Short & smooth", w: [45, 70], l: [10, 12], t: "Liver coat heavily ticked with white" },
   { n: "Dachshund", o: "Germany", g: "Hound", s: "Small", c: "Short & smooth", w: [16, 32], l: [12, 16], t: "Elongated body on very short legs for going to ground on badgers" },
   { n: "Pembroke Welsh Corgi", o: "Wales", g: "Herding", s: "Small", c: "Medium & dense double", w: [24, 30], l: [12, 13], t: "Very short legs paired with a natural bobtail" },
+  { n: "Cardigan Welsh Corgi", o: "Wales", g: "Herding", s: "Small", c: "Medium & dense double", w: [25, 38], l: [12, 15], t: "Long fox-like tail, where the Pembroke has a bobtail" },
   { n: "Australian Shepherd", o: "United States", g: "Herding", s: "Medium", c: "Medium & wavy double", w: [40, 65], l: [12, 15], t: "Merle coat often paired with blue or split-colored eyes" },
   { n: "Yorkshire Terrier", o: "England", g: "Toy", s: "Toy", c: "Long & silky single", w: [4, 7], l: [11, 15], t: "Floor-length steel-blue and tan silky coat" },
   { n: "Boxer", o: "Germany", g: "Working", s: "Large", c: "Short & smooth", w: [50, 80], l: [10, 12], t: "Undershot jaw beneath a short blunt muzzle" },
@@ -31,7 +34,8 @@ window.BREEDS = [
   { n: "Havanese", o: "Cuba", g: "Toy", s: "Small", c: "Long & silky wavy", w: [7, 13], l: [14, 16], t: "Unparted silky coat that falls loosely over the body" },
   { n: "Shetland Sheepdog", o: "Scotland", g: "Herding", s: "Small", c: "Long & dense double", w: [15, 25], l: [12, 14], t: "Rough-collie outline in miniature with a heavy mane" },
   { n: "Brittany", o: "France", g: "Sporting", s: "Medium", c: "Medium & feathered", w: [30, 40], l: [12, 14], t: "Orange-and-white coat over a naturally short tail" },
-  { n: "English Cocker Spaniel", o: "England", g: "Sporting", s: "Medium", c: "Medium & silky feathered", w: [26, 34], l: [12, 14], t: "Long low-set ears covered in silky feathering" },
+  { n: "English Cocker Spaniel", o: "England", g: "Sporting", s: "Medium", c: "Medium & silky feathered", w: [26, 34], l: [12, 14], t: "Taller, with a longer muzzle, than its American cousin" },
+  { n: "American Cocker Spaniel", o: "United States", g: "Sporting", s: "Small", c: "Long & silky feathered", w: [20, 30], l: [10, 14], t: "Domed skull with a short muzzle under a very profuse feathered coat" },
   { n: "Border Collie", o: "Scotland", g: "Herding", s: "Medium", c: "Medium & dense double", w: [30, 55], l: [12, 15], t: "Crouching stalk and hypnotic stare known as 'the eye'" },
   { n: "Vizsla", o: "Hungary", g: "Sporting", s: "Large", c: "Short & smooth", w: [44, 60], l: [12, 14], t: "Solid golden-rust coat with a self-colored nose" },
   { n: "Basset Hound", o: "France", g: "Hound", s: "Medium", c: "Short & smooth", w: [40, 65], l: [12, 13], t: "Extremely long ears and a heavy loose dewlap" },
@@ -175,23 +179,56 @@ window.BREEDS = [
   { n: "Entlebucher Mountain Dog", o: "Switzerland", g: "Herding", s: "Medium", c: "Short & hard double", w: [40, 65], l: [11, 13], t: "Smallest of the four Swiss mountain dogs, tricolor and squarely built" }
 ];
 
-/* Breeds a casual player can be expected to recognize on sight. The opening tier
- * draws its subjects only from these — no amount of obvious decoys makes a question
- * about a Cirneco dell'Etna a gentle one. Names must match `n` above exactly.
+/* How likely a casual player is to know the breed by name. The quiz is text-only —
+ * there is no photograph to reason from — so this is the strongest difficulty lever
+ * available: no arrangement of decoys makes a question about a Cirneco dell'Etna
+ * gentle. Every tier samples subjects by these bands, weighted toward `household`
+ * at low streaks and toward the long tail at high ones.
+ *
+ * household — names a non-dog-person would recognize unprompted
+ * known     — recognizable to anyone with passing interest
+ * anything absent from both is treated as specialist knowledge
+ *
+ * Names must match `n` above exactly; app.js reports any that do not resolve.
  */
-window.FAMILIAR_BREEDS = [
-  "Labrador Retriever", "German Shepherd", "Golden Retriever", "French Bulldog",
-  "Bulldog", "Standard Poodle", "Beagle", "Rottweiler", "Dachshund",
-  "Pembroke Welsh Corgi", "Australian Shepherd", "Yorkshire Terrier", "Boxer",
-  "Doberman Pinscher", "Great Dane", "Siberian Husky", "Bernese Mountain Dog",
-  "Shih Tzu", "Pomeranian", "Chihuahua", "Maltese", "Rough Collie", "Dalmatian",
-  "Pug", "Greyhound", "Border Collie", "Saint Bernard", "Newfoundland",
-  "Shiba Inu", "Akita", "Alaskan Malamute", "Samoyed", "Chow Chow",
-  "Boston Terrier", "Bichon Frise", "Basset Hound", "Bloodhound",
-  "Cavalier King Charles Spaniel", "Miniature Schnauzer", "Australian Cattle Dog",
-  "Great Pyrenees", "Weimaraner", "Irish Setter", "English Cocker Spaniel",
-  "West Highland White Terrier", "Bull Terrier", "Whippet", "Vizsla", "Mastiff",
-  "Cane Corso", "Belgian Malinois", "Papillon", "Pekingese", "Chinese Shar-Pei",
-  "Havanese", "Shetland Sheepdog", "English Springer Spaniel",
-  "German Shorthaired Pointer"
-];
+window.BREED_FAMILIARITY = {
+  household: [
+    "Labrador Retriever", "Golden Retriever", "German Shepherd", "French Bulldog",
+    "Bulldog", "Standard Poodle", "Miniature Poodle", "Toy Poodle", "Beagle",
+    "Rottweiler", "Dachshund", "Pembroke Welsh Corgi", "Yorkshire Terrier",
+    "Boxer", "Doberman Pinscher", "Great Dane", "Siberian Husky", "Chihuahua",
+    "Pug", "Dalmatian", "Shih Tzu", "Pomeranian", "Maltese", "Border Collie",
+    "Australian Shepherd", "Saint Bernard", "Rough Collie", "Greyhound",
+    "Boston Terrier", "Basset Hound", "Bloodhound", "Bernese Mountain Dog",
+    "Newfoundland", "Akita", "Shiba Inu", "Alaskan Malamute", "Samoyed",
+    "Chow Chow", "American Cocker Spaniel", "Cavalier King Charles Spaniel",
+    "Miniature Schnauzer", "Bichon Frise", "Great Pyrenees", "Mastiff",
+    "Whippet", "Weimaraner", "Bull Terrier", "West Highland White Terrier",
+    "Australian Cattle Dog", "Cane Corso", "Belgian Malinois", "Havanese"
+  ],
+  known: [
+    "English Cocker Spaniel", "English Springer Spaniel", "German Shorthaired Pointer",
+    "Irish Setter", "English Setter", "Gordon Setter", "Vizsla", "Brittany",
+    "Chesapeake Bay Retriever", "Flat-Coated Retriever", "Pointer",
+    "Nova Scotia Duck Tolling Retriever", "Shetland Sheepdog", "Cardigan Welsh Corgi",
+    "Bearded Collie", "Old English Sheepdog", "Bouvier des Flandres", "Briard",
+    "Papillon", "Pekingese", "Japanese Chin", "Chinese Crested", "Italian Greyhound",
+    "Miniature Pinscher", "Affenpinscher", "Brussels Griffon", "Silky Terrier",
+    "Scottish Terrier", "Cairn Terrier", "Parson Russell Terrier", "Airedale Terrier",
+    "Staffordshire Bull Terrier", "American Staffordshire Terrier",
+    "Soft Coated Wheaten Terrier", "Kerry Blue Terrier", "Irish Terrier",
+    "Welsh Terrier", "Bedlington Terrier", "Chinese Shar-Pei", "Lhasa Apso",
+    "Tibetan Mastiff", "Afghan Hound", "Saluki", "Borzoi", "Irish Wolfhound",
+    "Scottish Deerhound", "Rhodesian Ridgeback", "Basenji", "Norwegian Elkhound",
+    "Dogue de Bordeaux", "Bullmastiff", "Neapolitan Mastiff", "Anatolian Shepherd",
+    "Leonberger", "Greater Swiss Mountain Dog", "Komondor", "Puli",
+    "Portuguese Water Dog", "Standard Schnauzer", "Giant Schnauzer", "Keeshond",
+    "Finnish Spitz", "Xoloitzcuintli", "Coton de Tulear", "Rat Terrier",
+    "Manchester Terrier", "Pharaoh Hound", "Ibizan Hound", "American Foxhound",
+    "Black and Tan Coonhound", "Bluetick Coonhound", "Redbone Coonhound",
+    "Treeing Walker Coonhound", "Plott Hound", "Harrier", "Otterhound",
+    "Clumber Spaniel", "Welsh Springer Spaniel", "Beauceron", "Schipperke",
+    "Lagotto Romagnolo", "Spinone Italiano", "Curly-Coated Retriever",
+    "Irish Water Spaniel", "Miniature Bull Terrier", "Toy Fox Terrier"
+  ]
+};

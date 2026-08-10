@@ -157,28 +157,44 @@
   // -------------------------------------------------------------- question gen
 
   /* max      — the similarity the decoys aim for; 0 means as unlike the truth as possible
-   * affinity  — whether decoys should come from similar or dissimilar breeds
-   * familiar  — restrict the subject to breeds a casual player will recognize
-   * cats      — restrict the question to these attributes, if any can be built
+   * affinity — whether decoys should come from similar or dissimilar breeds
+   * mix      — relative odds of drawing a household / known / specialist subject
+   * cats     — restrict the question to these attributes, if any can be built
    *
-   * Starter asks only about size and signature trait. Both are answerable by
-   * reasoning about a dog you have seen: everyone knows a Great Dane is Giant.
-   * Group is left out because it needs kennel-club knowledge, and origin because
-   * it hides traps — the Standard Poodle is German and the Australian Shepherd
-   * is American, which is no way to end a beginner's first streak.
+   * The subject mix matters more than the decoys. A question is only as easy as the
+   * dog it names, so the household band dominates early and the long tail only
+   * really appears once a player has proved they can handle it.
+   *
+   * Categories phase in by how answerable they are without kennel-club knowledge:
+   * size and trait can be reasoned out from having seen the dog, weight nearly so.
+   * Origin hides traps (the Standard Poodle is German, the Australian Shepherd
+   * American). Group is pure convention. Lifespan is the coin-flip — every breed
+   * lives 10-to-15 years — so it waits until Hard.
    */
   var TIERS = [
-    { name: "Starter", max: 0.00, affinity: "far", familiar: true, cats: ["s", "t"] },
-    { name: "Easy", max: 0.15, affinity: "far", cats: ["s", "g", "o", "t"] },
-    { name: "Medium", max: 0.45, affinity: "mid" },
-    { name: "Hard", max: 0.72, affinity: "near" },
-    { name: "Brutal", max: 1.01, affinity: "near" }
+    { name: "Starter", max: 0.00, affinity: "far", mix: [1, 0, 0], cats: ["s", "t"] },
+    { name: "Easy", max: 0.12, affinity: "far", mix: [5, 1, 0], cats: ["s", "t", "w"] },
+    { name: "Medium", max: 0.35, affinity: "mid", mix: [4, 3, 0], cats: ["s", "t", "w", "o", "c"] },
+    { name: "Hard", max: 0.60, affinity: "near", mix: [2, 3, 1] },
+    { name: "Brutal", max: 1.01, affinity: "near", mix: [1, 2, 2] }
   ];
 
-  var FAMILIAR = (window.FAMILIAR_BREEDS || []).map(function (name) {
-    for (var i = 0; i < BREEDS.length; i++) if (BREEDS[i].n === name) return BREEDS[i];
-    return null;
-  }).filter(Boolean);
+  // BANDS[0] household, [1] known, [2] everything else.
+  var BANDS = [[], [], []];
+  (function () {
+    var fam = window.BREED_FAMILIARITY || {};
+    var rank = {};
+    (fam.household || []).forEach(function (n) { rank[n] = 0; });
+    (fam.known || []).forEach(function (n) { if (rank[n] === undefined) rank[n] = 1; });
+    BREEDS.forEach(function (b) {
+      BANDS[rank[b.n] === undefined ? 2 : rank[b.n]].push(b);
+    });
+    // A misspelt name would silently shrink the easy pool, so say so loudly.
+    var known = {};
+    BREEDS.forEach(function (b) { known[b.n] = 1; });
+    var bad = [].concat(fam.household || [], fam.known || []).filter(function (n) { return !known[n]; });
+    if (bad.length && window.console) console.warn("Unknown breed names in BREED_FAMILIARITY:", bad);
+  })();
 
   function tierForStreak(streak) {
     if (streak < 3) return 0;
@@ -189,18 +205,33 @@
     return Math.random() < 0.75 ? 4 : 3;
   }
 
+  // Draw a subject from the tier's familiarity mix, skipping bands that are empty.
+  function pickSubject(tier) {
+    var mix = tier.mix, total = 0, i;
+    for (i = 0; i < BANDS.length; i++) if (BANDS[i].length) total += mix[i];
+    if (!total) return pick(BREEDS);
+    var r = Math.random() * total;
+    for (i = 0; i < BANDS.length; i++) {
+      if (!BANDS[i].length || !mix[i]) continue;
+      r -= mix[i];
+      if (r <= 0) return pick(BANDS[i]);
+    }
+    return pick(BANDS[0].length ? BANDS[0] : BREEDS);
+  }
+
   var recentBreeds = [];
 
   function nextQuestion(streak) {
     var tierIdx = tierForStreak(streak);
     var tier = TIERS[tierIdx];
 
-    var from = tier.familiar && FAMILIAR.length >= 8 ? FAMILIAR : BREEDS;
-    var subject = pick(from);
+    var subject = pickSubject(tier);
     var guard = 0;
-    while (recentBreeds.indexOf(subject.n) !== -1 && guard++ < 40) subject = pick(from);
+    while (recentBreeds.indexOf(subject.n) !== -1 && guard++ < 40) subject = pickSubject(tier);
     recentBreeds.push(subject.n);
-    if (recentBreeds.length > Math.min(25, Math.floor(from.length / 4))) recentBreeds.shift();
+    // Held short enough that the household band, the smallest one in play, never
+    // runs out of unseen breeds.
+    if (recentBreeds.length > 15) recentBreeds.shift();
 
     // Prefer a category that actually has usable distractors, and honour the tier's
     // shortlist first — falling through to the rest only if none of them can build.

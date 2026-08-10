@@ -7,26 +7,36 @@ Get it right and your streak grows. Get it wrong and it resets to zero.
 
 Difficulty scales with your streak across five tiers:
 
-| Streak | Tier | Subject | Attributes asked |
+| Streak | Tier | Subject breeds (measured) | Attributes asked |
 | --- | --- | --- | --- |
-| 0–2 | Starter | Household-name breeds only | Size, trait |
-| 3–7 | Easy | Any breed | Size, trait, group, origin |
-| 8–14 | Medium | Any breed | All seven |
-| 15–23 | Hard | Any breed | All seven |
-| 24+ | Brutal | Any breed | All seven |
+| 0–2 | Starter | 100% household | Size, trait |
+| 3–7 | Easy | 81% household, 19% known | + weight |
+| 8–14 | Medium | 52% household, 48% known | + origin, coat |
+| 15–23 | Hard | 34% / 48% / 18% specialist | all seven |
+| 24+ | Brutal | 21% / 40% / 40% specialist | all seven |
 
-Starter is deliberately gentle in the one way that matters most: it draws its subject
-from ~58 breeds a casual player will recognize. No arrangement of decoys makes a question
-about a Cirneco dell'Etna easy, and the quiz is text-only — there is no photo to reason
-from — so familiarity with the *name* is the real difficulty lever. It asks only about
-size and signature trait, both answerable from having seen the dog: everyone knows a
-Great Dane is Giant. Breed group is held back because it needs kennel-club knowledge,
-and origin because it hides traps — the Standard Poodle is German and the Australian
-Shepherd is American, which is no way to end a beginner's first streak.
+The subject breed matters more than the decoys: a question is only as easy as the dog it
+names. The quiz is text-only — there is no photo to reason from — so recognizing the
+*name* is the strongest difficulty lever available, and no arrangement of decoys makes a
+question about a Cirneco dell'Etna gentle. Breeds are banded into `household` (52 names a
+non-dog-person knows unprompted), `known` (86 more), and everything else as specialist
+knowledge. Specialist breeds never appear before a streak of 15.
 
-From there decoys close in. Early ones come from very different dogs (a Chihuahua against
-Giant); by Brutal they are pulled from breeds sharing the same group, size and region, so
-a Norfolk Terrier's drop ears sit next to a Norwich Terrier's prick ears.
+Attributes phase in by how answerable they are without kennel-club knowledge. Size and
+trait can be reasoned out from having seen the dog, and weight nearly so. Origin waits
+because it hides traps — the Standard Poodle is German and the Australian Shepherd
+American. Group is pure convention. Lifespan is close to a coin flip, since almost every
+breed lives 10-to-15 years, so it does not appear until Hard.
+
+Decoys tighten on top of that. Early ones come from very different dogs (a Chihuahua
+against Giant); by Brutal they are pulled from breeds sharing the same group, size and
+region, so a Norfolk Terrier's drop ears sit next to a Norwich Terrier's prick ears.
+
+Where the dataset holds close relatives — the three Poodle varieties, the two Cocker
+Spaniels, the two Corgis — the attributes they genuinely share are recorded as identical
+values, which is what stops the engine from ever offering one twin's attribute as a decoy
+against the other. They differ only where the distinction is real and checkable: the
+Cardigan Corgi's long tail against the Pembroke's bobtail.
 
 Weight and lifespan are ranges, and two ranges that share any value make a question with
 no clean answer, so all four numeric options are kept fully disjoint. One consequence:

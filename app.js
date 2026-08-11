@@ -157,44 +157,55 @@
   // -------------------------------------------------------------- question gen
 
   /* max      — the similarity the decoys aim for; 0 means as unlike the truth as possible
+   * minSpread — hard floor on how far every decoy must sit from the truth, 0 = no floor
    * affinity — whether decoys should come from similar or dissimilar breeds
-   * mix      — relative odds of drawing a household / known / specialist subject
+   * mix      — relative odds of drawing a core / household / known / specialist subject
    * cats     — restrict the question to these attributes, if any can be built
    *
-   * The subject mix matters more than the decoys. A question is only as easy as the
-   * dog it names, so the household band dominates early and the long tail only
-   * really appears once a player has proved they can handle it.
+   * `max` only expresses a preference — the sort aims at it but takes what the pool
+   * offers. `minSpread` is the one that makes a tier genuinely easy, because it
+   * rejects candidates outright. It exists because of an arithmetic problem: there
+   * are five size classes, so three decoys drawn from the four remaining values
+   * always include one adjacent to the answer. "Large or Medium?" for a Bloodhound
+   * is a coin flip no amount of preference-tuning can remove. With a floor of 0.5 a
+   * size question can only be built when the answer is Toy or Giant, where the three
+   * furthest classes are the only ones left; every other breed falls through to a
+   * category that can satisfy the floor.
    *
-   * Categories phase in by how answerable they are without kennel-club knowledge:
-   * size and trait can be reasoned out from having seen the dog, weight nearly so.
+   * The same floor does useful work elsewhere: it forces origin decoys onto another
+   * continent and holds coat and trait decoys below half token overlap.
+   *
+   * Categories phase in by how answerable they are without kennel-club knowledge.
    * Origin hides traps (the Standard Poodle is German, the Australian Shepherd
-   * American). Group is pure convention. Lifespan is the coin-flip — every breed
-   * lives 10-to-15 years — so it waits until Hard.
+   * American). Coat is the fuzziest wording. Group is pure convention. Lifespan is
+   * the coin-flip — every breed lives 10-to-15 years — so it waits until Hard.
    */
   var TIERS = [
-    { name: "Starter", max: 0.00, affinity: "far", mix: [1, 0, 0], cats: ["s", "t"], hints: true },
-    { name: "Easy", max: 0.10, affinity: "far", mix: [8, 1, 0], cats: ["s", "t", "w"], hints: true },
-    { name: "Medium", max: 0.28, affinity: "mid", mix: [6, 3, 0], cats: ["s", "t", "w", "o"], hints: true },
-    { name: "Hard", max: 0.55, affinity: "near", mix: [3, 3, 1] },
-    { name: "Brutal", max: 1.01, affinity: "near", mix: [1, 2, 2] }
+    { name: "Starter", max: 0.00, minSpread: 0.50, affinity: "far", mix: [1, 0, 0, 0], cats: ["t", "s"], hints: true },
+    { name: "Easy", max: 0.08, minSpread: 0.50, affinity: "far", mix: [6, 2, 0, 0], cats: ["t", "s", "w"], hints: true },
+    { name: "Medium", max: 0.25, minSpread: 0.35, affinity: "mid", mix: [5, 3, 1, 0], cats: ["t", "s", "w", "o"], hints: true },
+    { name: "Hard", max: 0.55, minSpread: 0, affinity: "near", mix: [2, 3, 3, 1] },
+    { name: "Brutal", max: 1.01, minSpread: 0, affinity: "near", mix: [1, 2, 3, 3] }
   ];
 
   var HINTS = window.BREED_HINTS || {};
 
-  // BANDS[0] household, [1] known, [2] everything else.
-  var BANDS = [[], [], []];
+  // BANDS[0] core, [1] rest of household, [2] known, [3] everything else.
+  var BAND_KEYS = ["core", "household", "known"];
+  var BANDS = [[], [], [], []];
   (function () {
     var fam = window.BREED_FAMILIARITY || {};
     var rank = {};
-    (fam.household || []).forEach(function (n) { rank[n] = 0; });
-    (fam.known || []).forEach(function (n) { if (rank[n] === undefined) rank[n] = 1; });
+    BAND_KEYS.forEach(function (key, i) {
+      (fam[key] || []).forEach(function (n) { if (rank[n] === undefined) rank[n] = i; });
+    });
     BREEDS.forEach(function (b) {
-      BANDS[rank[b.n] === undefined ? 2 : rank[b.n]].push(b);
+      BANDS[rank[b.n] === undefined ? 3 : rank[b.n]].push(b);
     });
     // A misspelt name would silently shrink the easy pool, so say so loudly.
-    var known = {};
-    BREEDS.forEach(function (b) { known[b.n] = 1; });
-    var bad = [].concat(fam.household || [], fam.known || []).filter(function (n) { return !known[n]; });
+    var real = {};
+    BREEDS.forEach(function (b) { real[b.n] = 1; });
+    var bad = Object.keys(rank).filter(function (n) { return !real[n]; });
     if (bad.length && window.console) console.warn("Unknown breed names in BREED_FAMILIARITY:", bad);
   })();
 
@@ -290,6 +301,10 @@
       if (sameValue(cat, val, correct)) continue;
       if (numeric && overlaps(val, correct)) continue;
 
+      var similarity = cat.near(correct, val);
+      // Hard floor: too close to the truth to be a fair decoy at this tier.
+      if (tier.minSpread && similarity > 1 - tier.minSpread) continue;
+
       var label = cat.fmt(val);
       if (seen.indexOf(label) !== -1) continue;
       seen.push(label);
@@ -298,7 +313,7 @@
         value: val,
         label: label,
         owner: other,
-        near: cat.near(correct, val),          // similarity of the value itself
+        near: similarity,                       // similarity of the value itself
         affinity: breedAffinity(subject, other) // similarity of the source breed
       });
     }

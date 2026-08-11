@@ -17,7 +17,7 @@ window.BREEDS = [
   { n: "German Shorthaired Pointer", o: "Germany", g: "Sporting", s: "Large", c: "Short & smooth", w: [45, 70], l: [10, 12], t: "Liver coat heavily ticked with white" },
   { n: "Dachshund", o: "Germany", g: "Hound", s: "Small", c: "Short & smooth", w: [16, 32], l: [12, 16], t: "Elongated body on very short legs for going to ground on badgers" },
   { n: "Pembroke Welsh Corgi", o: "Wales", g: "Herding", s: "Small", c: "Medium & dense double", w: [24, 30], l: [12, 13], t: "Very short legs paired with a natural bobtail" },
-  { n: "Cardigan Welsh Corgi", o: "Wales", g: "Herding", s: "Small", c: "Medium & dense double", w: [25, 38], l: [12, 15], t: "Long fox-like tail, where the Pembroke has a bobtail" },
+  { n: "Cardigan Welsh Corgi", o: "Wales", g: "Herding", s: "Small", c: "Medium & dense double", w: [25, 38], l: [12, 15], t: "Long fox-like tail on a long, low, short-legged body" },
   { n: "Australian Shepherd", o: "United States", g: "Herding", s: "Medium", c: "Medium & wavy double", w: [40, 65], l: [12, 15], t: "Merle coat often paired with blue or split-colored eyes" },
   { n: "Yorkshire Terrier", o: "England", g: "Toy", s: "Toy", c: "Long & silky single", w: [4, 7], l: [11, 15], t: "Floor-length steel-blue and tan silky coat" },
   { n: "Boxer", o: "Germany", g: "Working", s: "Large", c: "Short & smooth", w: [50, 80], l: [10, 12], t: "Undershot jaw beneath a short blunt muzzle" },
@@ -34,7 +34,7 @@ window.BREEDS = [
   { n: "Havanese", o: "Cuba", g: "Toy", s: "Small", c: "Long & silky wavy", w: [7, 13], l: [14, 16], t: "Unparted silky coat that falls loosely over the body" },
   { n: "Shetland Sheepdog", o: "Scotland", g: "Herding", s: "Small", c: "Long & dense double", w: [15, 25], l: [12, 14], t: "Rough-collie outline in miniature with a heavy mane" },
   { n: "Brittany", o: "France", g: "Sporting", s: "Medium", c: "Medium & feathered", w: [30, 40], l: [12, 14], t: "Orange-and-white coat over a naturally short tail" },
-  { n: "English Cocker Spaniel", o: "England", g: "Sporting", s: "Medium", c: "Medium & silky feathered", w: [26, 34], l: [12, 14], t: "Taller, with a longer muzzle, than its American cousin" },
+  { n: "English Cocker Spaniel", o: "England", g: "Sporting", s: "Medium", c: "Medium & silky feathered", w: [26, 34], l: [12, 14], t: "A longer-legged working gundog build under only moderate feathering" },
   { n: "American Cocker Spaniel", o: "United States", g: "Sporting", s: "Small", c: "Long & silky feathered", w: [20, 30], l: [10, 14], t: "Domed skull with a short muzzle under a very profuse feathered coat" },
   { n: "Border Collie", o: "Scotland", g: "Herding", s: "Medium", c: "Medium & dense double", w: [30, 55], l: [12, 15], t: "Crouching stalk and hypnotic stare known as 'the eye'" },
   { n: "Vizsla", o: "Hungary", g: "Sporting", s: "Large", c: "Short & smooth", w: [44, 60], l: [12, 14], t: "Solid golden-rust coat with a self-colored nose" },
@@ -192,16 +192,19 @@ window.BREEDS = [
  * Names must match `n` above exactly; app.js reports any that do not resolve.
  */
 window.BREED_FAMILIARITY = {
-  household: [
+  // The dogs a non-dog-person can name from a lineup. Starter uses nothing else.
+  core: [
     "Labrador Retriever", "Golden Retriever", "German Shepherd", "French Bulldog",
-    "Bulldog", "Standard Poodle", "Miniature Poodle", "Toy Poodle", "Beagle",
-    "Rottweiler", "Dachshund", "Pembroke Welsh Corgi", "Yorkshire Terrier",
-    "Boxer", "Doberman Pinscher", "Great Dane", "Siberian Husky", "Chihuahua",
-    "Pug", "Dalmatian", "Shih Tzu", "Pomeranian", "Maltese", "Border Collie",
-    "Australian Shepherd", "Saint Bernard", "Rough Collie", "Greyhound",
-    "Boston Terrier", "Basset Hound", "Bloodhound", "Bernese Mountain Dog",
-    "Newfoundland", "Akita", "Shiba Inu", "Alaskan Malamute", "Samoyed",
-    "Chow Chow", "American Cocker Spaniel", "Cavalier King Charles Spaniel",
+    "Bulldog", "Standard Poodle", "Toy Poodle", "Beagle", "Rottweiler", "Dachshund",
+    "Pembroke Welsh Corgi", "Yorkshire Terrier", "Boxer", "Doberman Pinscher",
+    "Great Dane", "Siberian Husky", "Chihuahua", "Pug", "Dalmatian", "Shih Tzu",
+    "Pomeranian", "Maltese", "Border Collie", "Australian Shepherd", "Saint Bernard",
+    "Rough Collie", "Greyhound", "Boston Terrier", "Bernese Mountain Dog",
+    "Newfoundland", "Shiba Inu", "Chow Chow"
+  ],
+  household: [
+    "Miniature Poodle", "Basset Hound", "Bloodhound", "Akita", "Alaskan Malamute",
+    "Samoyed", "American Cocker Spaniel", "Cavalier King Charles Spaniel",
     "Miniature Schnauzer", "Bichon Frise", "Great Pyrenees", "Mastiff",
     "Whippet", "Weimaraner", "Bull Terrier", "West Highland White Terrier",
     "Australian Cattle Dog", "Cane Corso", "Belgian Malinois", "Havanese"

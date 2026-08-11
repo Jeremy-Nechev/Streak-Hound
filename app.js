@@ -34,6 +34,7 @@
       ask: function (b) { return "Where was the " + b.n + " developed?"; },
       fmt: function (v) { return v; },
       reveal: function (b) { return "The " + b.n + " was developed in " + b.o + "."; },
+      claim: function (b, v) { return "The " + b.n + " was developed in " + v + "."; },
       // 0 = very different, 1 = nearly identical
       near: function (a, b) {
         if (a === b) return 1;
@@ -46,6 +47,7 @@
       ask: function (b) { return "Which group does the " + b.n + " belong to?"; },
       fmt: function (v) { return v + " group"; },
       reveal: function (b) { return "The " + b.n + " is in the " + b.g + " group."; },
+      claim: function (b, v) { return "The " + b.n + " belongs to the " + v + " group."; },
       near: function (a, b) { return a === b ? 1 : 0.2; }
     },
     {
@@ -65,6 +67,7 @@
       ask: function (b) { return "What kind of coat does the " + b.n + " have?"; },
       fmt: function (v) { return v; },
       reveal: function (b) { return "The " + b.n + "’s coat is " + lower(b.c) + "."; },
+      claim: function (b, v) { return "The " + b.n + " has a " + lower(v) + " coat."; },
       near: function (a, b) { return tokenOverlap(a, b); }
     },
     {
@@ -84,6 +87,7 @@
       ask: function (b) { return "What is the typical lifespan of the " + b.n + "?"; },
       fmt: function (v) { return v[0] + "–" + v[1] + " years"; },
       reveal: function (b) { return "The " + b.n + " typically lives " + b.l[0] + "–" + b.l[1] + " years."; },
+      claim: function (b, v) { return "The " + b.n + " typically lives " + v[0] + "–" + v[1] + " years."; },
       near: function (a, b) {
         var am = (a[0] + a[1]) / 2, bm = (b[0] + b[1]) / 2;
         return 1 - Math.min(1, Math.abs(am - bm) / 7);
@@ -95,6 +99,8 @@
       ask: function (b) { return "Which trait belongs to the " + b.n + "?"; },
       fmt: function (v) { return v; },
       reveal: function (b) { return "The real trait of the " + b.n + ": " + b.t + "."; },
+      // Traits are a mix of noun and verb phrases, so quote rather than inline them.
+      claim: function (b, v) { return "The " + b.n + " is the breed described as: “" + v + "”."; },
       near: function (a, b) { return tokenOverlap(a, b); }
     }
   ];
@@ -179,10 +185,25 @@
    * Origin hides traps (the Standard Poodle is German, the Australian Shepherd
    * American). Coat is the fuzziest wording. Group is pure convention. Lifespan is
    * the coin-flip — every breed lives 10-to-15 years — so it waits until Hard.
+   *
+   * cats — attributes askable as four-way multiple choice
+   * tf   — attributes askable as a single true/false claim, with `tfShare` the odds
+   *        of preferring that format when both are available
+   *
+   * Starter and Easy only ever ask multiple choice about size and weight, the two
+   * facts you can judge by picturing the dog. Everything else at those tiers is put
+   * as one true/false claim instead, which asks whether a statement fits rather than
+   * making you produce the answer from four candidates.
    */
   var TIERS = [
-    { name: "Starter", max: 0.00, minSpread: 0.50, affinity: "far", mix: [1, 0, 0, 0], cats: ["t", "s"], hints: true },
-    { name: "Easy", max: 0.08, minSpread: 0.50, affinity: "far", mix: [6, 2, 0, 0], cats: ["t", "s", "w"], hints: true },
+    {
+      name: "Starter", max: 0.00, minSpread: 0.50, affinity: "far", mix: [1, 0, 0, 0],
+      cats: ["s", "w"], tf: ["t", "c", "g", "o", "l"], tfShare: 0.5, hints: true
+    },
+    {
+      name: "Easy", max: 0.08, minSpread: 0.50, affinity: "far", mix: [6, 2, 0, 0],
+      cats: ["s", "w"], tf: ["t", "c", "g", "o", "l"], tfShare: 0.5, hints: true
+    },
     { name: "Medium", max: 0.25, minSpread: 0.35, affinity: "mid", mix: [5, 3, 1, 0], cats: ["t", "s", "w", "o"], hints: true },
     { name: "Hard", max: 0.55, minSpread: 0, affinity: "near", mix: [2, 3, 3, 1] },
     { name: "Brutal", max: 1.01, minSpread: 0, affinity: "near", mix: [1, 2, 3, 3] }
@@ -246,54 +267,117 @@
     // runs out of unseen breeds.
     if (recentBreeds.length > 15) recentBreeds.shift();
 
-    // Prefer a category that actually has usable distractors, and honour the tier's
-    // shortlist first — falling through to the rest only if none of them can build.
-    var cats = shuffle(CATEGORIES.slice());
-    if (tier.cats) {
-      var wanted = [], others = [];
-      cats.forEach(function (c) {
-        (tier.cats.indexOf(c.key) === -1 ? others : wanted).push(c);
-      });
-      cats = wanted.concat(others);
-    }
-    var chosen = null;
-    for (var i = 0; i < cats.length && !chosen; i++) {
-      var built = buildOptions(subject, cats[i], tier);
-      if (built) chosen = { cat: cats[i], options: built };
-    }
-    if (!chosen) return nextQuestion(streak); // vanishingly unlikely
+    // Try the tier's preferred format first, then the other one. Either can fail to
+    // build for a given breed, so neither is allowed to be the only route.
+    var wantTF = tier.tf && tier.tf.length && Math.random() < (tier.tfShare || 0);
+    var q = wantTF
+      ? (buildTF(subject, tier) || buildMC(subject, tier))
+      : (buildMC(subject, tier) || buildTF(subject, tier));
+    if (!q) return nextQuestion(streak); // vanishingly unlikely
 
-    return {
-      breed: subject,
-      category: chosen.cat,
-      options: chosen.options,
-      tier: tier.name,
-      tierIndex: tierIdx,
-      hint: tier.hints ? hintFor(subject, chosen.cat) : null
-    };
+    q.breed = subject;
+    q.tier = tier.name;
+    q.tierIndex = tierIdx;
+    q.hint = tier.hints ? hintFor(subject, q) : null;
+    return q;
   }
 
-  // A hint that happens to contain the answer defeats the question, so withhold it
-  // rather than hand it over. Only origin realistically collides — a hint may well
-  // name the country — but the check is cheap enough to apply across the board.
-  function hintFor(subject, cat) {
+  // Categories this tier may ask, in random order. A tier that names a shortlist gets
+  // only that shortlist — the point of restricting Starter to size and weight is lost
+  // if coat sneaks in whenever size cannot build.
+  function tierCategories(tier, keys) {
+    var out = [];
+    shuffle(CATEGORIES.slice()).forEach(function (c) {
+      if (!keys || keys.indexOf(c.key) !== -1) out.push(c);
+    });
+    return out;
+  }
+
+  function buildMC(subject, tier) {
+    var cats = tierCategories(tier, tier.cats);
+    for (var i = 0; i < cats.length; i++) {
+      var options = buildOptions(subject, cats[i], tier);
+      if (options) return { kind: "mc", category: cats[i], options: options };
+    }
+    return null;
+  }
+
+  // One claim about the breed, true half the time. When false the value is a real
+  // attribute of another breed, chosen under the same distance floor as a decoy, so
+  // "the Chihuahua typically lives 6-8 years" is wrong by a clear margin.
+  function buildTF(subject, tier) {
+    if (!tier.tf) return null;
+    var cats = tierCategories(tier, tier.tf);
+    var wantTrue = Math.random() < 0.5;
+
+    for (var i = 0; i < cats.length; i++) {
+      var cat = cats[i];
+      if (!cat.claim) continue;
+      var value, owner = null;
+
+      if (wantTrue) {
+        value = subject[cat.key];
+      } else {
+        var pool = candidatePool(subject, cat, tier);
+        if (!pool.length) continue;
+        var head = pool.slice(0, Math.max(1, Math.min(pool.length, Math.ceil(pool.length * 0.4), 14)));
+        var choice = pick(head);
+        value = choice.value;
+        owner = choice.owner;
+      }
+
+      return {
+        kind: "tf",
+        category: cat,
+        claim: cat.claim(subject, value),
+        claimedValue: value,
+        truth: wantTrue,
+        owner: owner,
+        options: [
+          { label: "True", correct: wantTrue },
+          { label: "False", correct: !wantTrue }
+        ]
+      };
+    }
+    return null;
+  }
+
+  /* A hint that happens to contain the answer defeats the question, so withhold it
+   * rather than hand it over. Only origin realistically collides — a hint may well
+   * name the country — but the check is cheap enough to apply across the board.
+   *
+   * True/false needs both values checked, not just the claimed one: on a false claim,
+   * a hint that names the breed's real origin tells you the claim is wrong just as
+   * surely as one that confirms a true claim.
+   */
+  function hintFor(subject, q) {
     var text = HINTS[subject.n];
     if (!text) return null;
-    var answer = String(cat.fmt(subject[cat.key]));
-    return text.toLowerCase().indexOf(answer.toLowerCase()) === -1 ? text : null;
+    var lowered = text.toLowerCase();
+    var forbidden = [String(q.category.fmt(subject[q.category.key]))];
+    if (q.kind === "tf") forbidden.push(String(q.category.fmt(q.claimedValue)));
+
+    for (var i = 0; i < forbidden.length; i++) {
+      if (lowered.indexOf(forbidden[i].toLowerCase()) !== -1) return null;
+    }
+    return text;
   }
 
-  function buildOptions(subject, cat, tier) {
+  // Weight and lifespan are ranges. Two ranges that share any value make for an
+  // ambiguous question — "12–16 years" against "13–16 years" has no clean answer — so
+  // every numeric option must be fully disjoint from every other.
+  function isNumeric(cat) { return cat.key === "w" || cat.key === "l"; }
+
+  /* Every attribute value held by another breed that could stand in for the truth,
+   * sorted best-first for this tier. Shared by both question formats so a false
+   * true/false claim is filtered exactly as strictly as a multiple-choice decoy.
+   */
+  function candidatePool(subject, cat, tier) {
     var correct = subject[cat.key];
-
-    // Weight and lifespan are ranges. Two ranges that share any value make for an
-    // ambiguous question — "12–16 years" against "13–16 years" has no clean answer —
-    // so every numeric option must be fully disjoint from every other.
-    var numeric = cat.key === "w" || cat.key === "l";
-
-    // Candidate pool: values from other breeds that genuinely differ.
+    var numeric = isNumeric(cat);
     var pool = [];
     var seen = [];
+
     for (var i = 0; i < BREEDS.length; i++) {
       var other = BREEDS[i];
       if (other === subject) continue;
@@ -317,9 +401,8 @@
         affinity: breedAffinity(subject, other) // similarity of the source breed
       });
     }
-    if (pool.length < 3) return null;
 
-    // Difficulty = how close the decoys sit to the truth.
+    // Difficulty = how close the candidates sit to the truth.
     var wantNear = tier.max;
     pool.sort(function (a, b) {
       var sa = Math.abs(a.near - wantNear) - (tier.affinity === "near" ? a.affinity * 0.04 : 0)
@@ -328,6 +411,14 @@
         + (tier.affinity === "far" ? b.affinity * 0.04 : 0);
       return sa - sb;
     });
+    return pool;
+  }
+
+  function buildOptions(subject, cat, tier) {
+    var correct = subject[cat.key];
+    var numeric = isNumeric(cat);
+    var pool = candidatePool(subject, cat, tier);
+    if (pool.length < 3) return null;
 
     // Sample from a window near the front so repeats don't feel canned, then fall
     // back down the sorted tail if the disjoint rule rejects too much of the window.
@@ -338,7 +429,7 @@
     var ordered = head.concat(pool.slice(head.length));
 
     var decoys = [];
-    for (i = 0; i < ordered.length && decoys.length < 3; i++) {
+    for (var i = 0; i < ordered.length && decoys.length < 3; i++) {
       if (numeric && clashes(ordered[i].value, decoys)) continue;
       decoys.push(ordered[i]);
     }
@@ -392,7 +483,10 @@
 
     var q = state.current;
     el.breed.textContent = q.breed.n;
-    el.prompt.textContent = q.category.ask(q.breed);
+    el.prompt.textContent = q.kind === "tf"
+      ? "True or false — " + q.claim
+      : q.category.ask(q.breed);
+    el.prompt.className = q.kind === "tf" ? "prompt claim" : "prompt";
     el.tier.textContent = q.tier;
     el.tier.className = "tier tier-" + q.tierIndex;
 
@@ -452,15 +546,12 @@
         localStorage.setItem("streakhound.best", String(state.best));
       }
       el.feedback.className = "feedback good";
-      el.feedback.innerHTML = "<strong>Correct.</strong> " + escapeHtml(q.breed.n) + " — " +
-        escapeHtml(q.breed.t) + ".";
+      el.feedback.innerHTML = "<strong>Correct.</strong> " + explain(q, opt, true);
     } else {
       button.classList.add("wrong");
       el.feedback.className = "feedback bad";
       var lost = state.streak;
-      el.feedback.innerHTML = "<strong>Wrong.</strong> “" + escapeHtml(opt.label) + "” is the " +
-        escapeHtml(q.category.label) + " of the <em>" + escapeHtml(opt.owner.n) + "</em>. " +
-        escapeHtml(q.category.reveal(q.breed)) +
+      el.feedback.innerHTML = "<strong>Wrong.</strong> " + explain(q, opt, false) +
         (lost > 0 ? " <strong>Streak of " + lost + " lost.</strong>" : "");
       state.streak = 0;
     }
@@ -468,6 +559,23 @@
     paintStats();
     el.next.hidden = false;
     el.next.focus();
+  }
+
+  /* Says what the truth was, either way. A true/false answer earns the same
+   * explanation whether the player got it right or not, since knowing which breed a
+   * false claim actually described is the part worth learning.
+   */
+  function explain(q, opt, wasCorrect) {
+    var reveal = escapeHtml(q.category.reveal(q.breed));
+
+    if (q.kind === "tf") {
+      if (q.truth) return "That claim is true. " + reveal;
+      return "That is the " + escapeHtml(q.category.label) + " of the <em>" +
+        escapeHtml(q.owner.n) + "</em>. " + reveal;
+    }
+    if (wasCorrect) return escapeHtml(q.breed.n) + " — " + escapeHtml(q.breed.t) + ".";
+    return "“" + escapeHtml(opt.label) + "” is the " + escapeHtml(q.category.label) +
+      " of the <em>" + escapeHtml(opt.owner.n) + "</em>. " + reveal;
   }
 
   function escapeHtml(s) {

@@ -172,12 +172,14 @@
    * lives 10-to-15 years — so it waits until Hard.
    */
   var TIERS = [
-    { name: "Starter", max: 0.00, affinity: "far", mix: [1, 0, 0], cats: ["s", "t"] },
-    { name: "Easy", max: 0.12, affinity: "far", mix: [5, 1, 0], cats: ["s", "t", "w"] },
-    { name: "Medium", max: 0.35, affinity: "mid", mix: [4, 3, 0], cats: ["s", "t", "w", "o", "c"] },
-    { name: "Hard", max: 0.60, affinity: "near", mix: [2, 3, 1] },
+    { name: "Starter", max: 0.00, affinity: "far", mix: [1, 0, 0], cats: ["s", "t"], hints: true },
+    { name: "Easy", max: 0.10, affinity: "far", mix: [8, 1, 0], cats: ["s", "t", "w"], hints: true },
+    { name: "Medium", max: 0.28, affinity: "mid", mix: [6, 3, 0], cats: ["s", "t", "w", "o"], hints: true },
+    { name: "Hard", max: 0.55, affinity: "near", mix: [3, 3, 1] },
     { name: "Brutal", max: 1.01, affinity: "near", mix: [1, 2, 2] }
   ];
+
+  var HINTS = window.BREED_HINTS || {};
 
   // BANDS[0] household, [1] known, [2] everything else.
   var BANDS = [[], [], []];
@@ -197,11 +199,11 @@
   })();
 
   function tierForStreak(streak) {
-    if (streak < 3) return 0;
-    if (streak < 8) return 1;
-    if (streak < 15) return 2;
-    if (streak < 24) return 3;
-    // Past 24, mostly brutal with the odd breather.
+    if (streak < 5) return 0;
+    if (streak < 12) return 1;
+    if (streak < 20) return 2;
+    if (streak < 30) return 3;
+    // Past 30, mostly brutal with the odd breather.
     return Math.random() < 0.75 ? 4 : 3;
   }
 
@@ -255,8 +257,19 @@
       category: chosen.cat,
       options: chosen.options,
       tier: tier.name,
-      tierIndex: tierIdx
+      tierIndex: tierIdx,
+      hint: tier.hints ? hintFor(subject, chosen.cat) : null
     };
+  }
+
+  // A hint that happens to contain the answer defeats the question, so withhold it
+  // rather than hand it over. Only origin realistically collides — a hint may well
+  // name the country — but the check is cheap enough to apply across the board.
+  function hintFor(subject, cat) {
+    var text = HINTS[subject.n];
+    if (!text) return null;
+    var answer = String(cat.fmt(subject[cat.key]));
+    return text.toLowerCase().indexOf(answer.toLowerCase()) === -1 ? text : null;
   }
 
   function buildOptions(subject, cat, tier) {
@@ -337,6 +350,9 @@
     streak: document.getElementById("streak"),
     best: document.getElementById("best"),
     answered: document.getElementById("answered"),
+    hint: document.getElementById("hint"),
+    hintToggle: document.getElementById("hint-toggle"),
+    hintText: document.getElementById("hint-text"),
     tier: document.getElementById("tier"),
     count: document.getElementById("breed-count")
   };
@@ -380,7 +396,26 @@
       el.options.appendChild(b);
     });
 
+    paintHint(q);
     paintStats();
+  }
+
+  // Offered on the gentler tiers only. Past Medium, knowing the breed is the game.
+  function paintHint(q) {
+    var text = q.hint;
+    el.hint.hidden = !text;
+    el.hintText.hidden = true;
+    el.hintText.textContent = text || "";
+    el.hintToggle.setAttribute("aria-expanded", "false");
+    el.hintToggle.textContent = "Don’t know this breed?";
+  }
+
+  function toggleHint() {
+    if (el.hint.hidden) return;
+    var show = el.hintText.hidden;
+    el.hintText.hidden = !show;
+    el.hintToggle.setAttribute("aria-expanded", show ? "true" : "false");
+    el.hintToggle.textContent = show ? "Hide hint" : "Don’t know this breed?";
   }
 
   function answer(opt, button) {
@@ -436,12 +471,15 @@
 
   el.next.addEventListener("click", render);
 
+  el.hintToggle.addEventListener("click", toggleHint);
+
   document.addEventListener("keydown", function (e) {
     if (el.game.hidden) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.start.click(); }
       return;
     }
     var k = e.key.toLowerCase();
+    if (k === "h") { e.preventDefault(); toggleHint(); return; }
     if (!state.locked) {
       var idx = ["a", "b", "c", "d"].indexOf(k);
       if (idx === -1) idx = ["1", "2", "3", "4"].indexOf(k);

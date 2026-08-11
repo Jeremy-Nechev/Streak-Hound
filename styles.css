@@ -227,6 +227,34 @@ kbd {
 
 .option.wrong .key { color: var(--bad); border-color: var(--bad); }
 
+/* ---------------------------------------------------------------------- hint */
+
+.hint { margin-top: .9rem; }
+
+.hint-toggle {
+  padding: 0;
+  font: inherit;
+  font-size: .85rem;
+  color: var(--ink-soft);
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  cursor: pointer;
+}
+
+.hint-toggle:hover { color: var(--accent); }
+
+.hint-text {
+  margin: .6rem 0 0;
+  padding: .7rem .85rem;
+  font-size: .9rem;
+  color: var(--ink-soft);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+}
+
 /* ------------------------------------------------------------------ feedback */
 
 .feedback { margin-top: 1rem; font-size: .95rem; }

@@ -26,9 +26,11 @@
     <p>You are given a breed and must pick the attribute that belongs to it. The other three answers are real for other breeds,
       but they belong to <em>other</em> breeds.</p>
     <p>One wrong answer and your streak drops to zero. Questions get harder the longer you
-      survive: the decoys start obvious and end up nearly indistinguishable.</p>
+      survive: it opens on breeds everyone knows and ends on decoys that are nearly
+      indistinguishable. Early on you can ask for a hint about any breed you don’t recognize.</p>
     <p class="meta"><strong id="breed-count">0</strong> breeds in the pool · keys
-      <kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> to answer, <kbd>Enter</kbd> to continue</p>
+      <kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> to answer, <kbd>H</kbd> for a hint,
+      <kbd>Enter</kbd> to continue</p>
     <button id="start" class="primary" type="button">Start the run</button>
   </section>
 
@@ -39,6 +41,12 @@
     </div>
     <p id="prompt" class="prompt">—</p>
     <div id="options" class="options"></div>
+    <div id="hint" class="hint" hidden>
+      <button id="hint-toggle" class="hint-toggle" type="button" aria-expanded="false" aria-controls="hint-text">
+        Don’t know this breed?
+      </button>
+      <p id="hint-text" class="hint-text" hidden></p>
+    </div>
     <div id="feedback" class="feedback"></div>
     <button id="next" class="primary" type="button" hidden>Next breed →</button>
   </section>

@@ -7,13 +7,22 @@ Get it right and your streak grows. Get it wrong and it resets to zero.
 
 Difficulty scales with your streak across five tiers:
 
-| Streak | Tier | Subject breeds (measured) | Attributes asked |
-| --- | --- | --- | --- |
-| 0–2 | Starter | 100% household | Size, trait |
-| 3–7 | Easy | 81% household, 19% known | + weight |
-| 8–14 | Medium | 52% household, 48% known | + origin, coat |
-| 15–23 | Hard | 34% / 48% / 18% specialist | all seven |
-| 24+ | Brutal | 21% / 40% / 40% specialist | all seven |
+| Streak | Tier | Subject breeds (measured) | Attributes asked | Hints |
+| --- | --- | --- | --- | --- |
+| 0–4 | Starter | 100% household | Size, trait | yes |
+| 5–11 | Easy | 86% household, 14% known | + weight | yes |
+| 12–19 | Medium | 62% household, 38% known | + origin | yes |
+| 20–29 | Hard | 39% / 45% / 16% specialist | + coat, group, lifespan | no |
+| 30+ | Brutal | 21% / 39% / 39% specialist | all seven | no |
+
+Up to Medium, a **Don't know this breed?** toggle sits under the options (or press
+<kbd>H</kbd>) and gives a one-line note on what the dog actually is — role, history,
+reputation — for the 138 breeds those tiers can ask about. The notes deliberately avoid
+physical description, since mentioning the coat or the signature trait would hand over the
+answer they exist to help you reason toward. A hint is withheld outright if it happens to
+contain the answer, which in practice only affects origin questions on the handful of
+breeds whose hint names their country — there is no way to hint at the Havanese without
+saying Cuba. Past Medium there are no hints: knowing the breed is the game.
 
 The subject breed matters more than the decoys: a question is only as easy as the dog it
 names. The quiz is text-only — there is no photo to reason from — so recognizing the
@@ -25,8 +34,10 @@ knowledge. Specialist breeds never appear before a streak of 15.
 Attributes phase in by how answerable they are without kennel-club knowledge. Size and
 trait can be reasoned out from having seen the dog, and weight nearly so. Origin waits
 because it hides traps — the Standard Poodle is German and the Australian Shepherd
-American. Group is pure convention. Lifespan is close to a coin flip, since almost every
-breed lives 10-to-15 years, so it does not appear until Hard.
+American. Coat is the fuzziest of the seven, since "Medium & silky feathered" against
+"Long & flowing silky" is a fine distinction rather than a clean fact. Group is pure
+convention, and lifespan is close to a coin flip because almost every breed lives
+10-to-15 years. Those last three wait until Hard.
 
 Decoys tighten on top of that. Early ones come from very different dogs (a Chihuahua
 against Giant); by Brutal they are pulled from breeds sharing the same group, size and

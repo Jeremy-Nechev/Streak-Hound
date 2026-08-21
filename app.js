@@ -1,4 +1,4 @@
-/* Streak Hound — dog breed attribute quiz.
+/* Streak Hound: dog breed attribute quiz.
  * One breed per question, four attribute options, three of which belong to other breeds.
  * A wrong answer resets the streak to zero.
  */
@@ -149,7 +149,7 @@
     return arr;
   }
 
-  // How alike two breeds are overall — drives how cruel the distractors feel.
+  // How alike two breeds are overall, which drives how cruel the distractors feel.
   function breedAffinity(a, b) {
     var score = 0;
     if (a.g === b.g) score += 2;
@@ -162,13 +162,13 @@
 
   // -------------------------------------------------------------- question gen
 
-  /* max      — the similarity the decoys aim for; 0 means as unlike the truth as possible
-   * minSpread — hard floor on how far every decoy must sit from the truth, 0 = no floor
-   * affinity — whether decoys should come from similar or dissimilar breeds
-   * mix      — relative odds of drawing a core / household / known / specialist subject
-   * cats     — restrict the question to these attributes, if any can be built
+  /* max: the similarity the decoys aim for; 0 means as unlike the truth as possible
+   * minSpread: hard floor on how far every decoy must sit from the truth, 0 = no floor
+   * affinity: whether decoys should come from similar or dissimilar breeds
+   * mix: relative odds of drawing a core / household / known / specialist subject
+   * cats: restrict the question to these attributes, if any can be built
    *
-   * `max` only expresses a preference — the sort aims at it but takes what the pool
+   * `max` only expresses a preference: the sort aims at it but takes what the pool
    * offers. `minSpread` is the one that makes a tier genuinely easy, because it
    * rejects candidates outright. It exists because of an arithmetic problem: there
    * are five size classes, so three decoys drawn from the four remaining values
@@ -184,10 +184,10 @@
    * Categories phase in by how answerable they are without kennel-club knowledge.
    * Origin hides traps (the Standard Poodle is German, the Australian Shepherd
    * American). Coat is the fuzziest wording. Group is pure convention. Lifespan is
-   * the coin-flip — every breed lives 10-to-15 years — so it waits until Hard.
+   * the coin-flip, since every breed lives 10-to-15 years, so it waits until Hard.
    *
-   * cats — attributes askable as four-way multiple choice
-   * tf   — attributes askable as a single true/false claim, with `tfShare` the odds
+   * cats: attributes askable as four-way multiple choice
+   * tf: attributes askable as a single true/false claim, with `tfShare` the odds
    *        of preferring that format when both are available
    *
    * Starter and Easy only ever ask multiple choice about size and weight, the two
@@ -283,7 +283,7 @@
   }
 
   // Categories this tier may ask, in random order. A tier that names a shortlist gets
-  // only that shortlist — the point of restricting Starter to size and weight is lost
+  // only that shortlist, since the point of restricting Starter to size and weight is lost
   // if coat sneaks in whenever size cannot build.
   function tierCategories(tier, keys) {
     var out = [];
@@ -343,8 +343,8 @@
   }
 
   /* A hint that happens to contain the answer defeats the question, so withhold it
-   * rather than hand it over. Only origin realistically collides — a hint may well
-   * name the country — but the check is cheap enough to apply across the board.
+   * rather than hand it over. Only origin realistically collides, since a hint may well
+   * name the country, but the check is cheap enough to apply across the board.
    *
    * True/false needs both values checked, not just the claimed one: on a false claim,
    * a hint that names the breed's real origin tells you the claim is wrong just as
@@ -364,7 +364,7 @@
   }
 
   // Weight and lifespan are ranges. Two ranges that share any value make for an
-  // ambiguous question — "12–16 years" against "13–16 years" has no clean answer — so
+  // ambiguous question, since "12–16 years" against "13–16 years" has no clean answer, so
   // every numeric option must be fully disjoint from every other.
   function isNumeric(cat) { return cat.key === "w" || cat.key === "l"; }
 
@@ -484,7 +484,7 @@
     var q = state.current;
     el.breed.textContent = q.breed.n;
     el.prompt.textContent = q.kind === "tf"
-      ? "True or false — " + q.claim
+      ? "True or false: " + q.claim
       : q.category.ask(q.breed);
     el.prompt.className = q.kind === "tf" ? "prompt claim" : "prompt";
     el.tier.textContent = q.tier;
@@ -573,7 +573,7 @@
       return "That is the " + escapeHtml(q.category.label) + " of the <em>" +
         escapeHtml(q.owner.n) + "</em>. " + reveal;
     }
-    if (wasCorrect) return escapeHtml(q.breed.n) + " — " + escapeHtml(q.breed.t) + ".";
+    if (wasCorrect) return escapeHtml(q.breed.n) + ": " + escapeHtml(q.breed.t) + ".";
     return "“" + escapeHtml(opt.label) + "” is the " + escapeHtml(q.category.label) +
       " of the <em>" + escapeHtml(opt.owner.n) + "</em>. " + reveal;
   }

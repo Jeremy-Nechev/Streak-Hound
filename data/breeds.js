@@ -115,7 +115,7 @@ window.BREEDS = [
   { n: "Old English Sheepdog", o: "England", g: "Herding", s: "Large", c: "Profuse shaggy double", w: [60, 100], l: [10, 12], t: "Shaggy coat falling over the eyes above a bear-like amble" },
   { n: "Bearded Collie", o: "Scotland", g: "Herding", s: "Medium", c: "Long & shaggy double", w: [45, 55], l: [12, 14], t: "Long beard hanging beneath the chin" },
   { n: "Canaan Dog", o: "Israel", g: "Herding", s: "Medium", c: "Short & harsh double", w: [35, 55], l: [12, 15], t: "Ancient free-living pariah dog of the Levant" },
-  { n: "Pharaoh Hound", o: "Malta", g: "Hound", s: "Medium", c: "Short & glossy", w: [45, 55], l: [12, 14], t: "Blushes — the nose and ears flush rosy when it is excited" },
+  { n: "Pharaoh Hound", o: "Malta", g: "Hound", s: "Medium", c: "Short & glossy", w: [45, 55], l: [12, 14], t: "Blushes, meaning the nose and ears flush rosy when it is excited" },
   { n: "Ibizan Hound", o: "Spain", g: "Hound", s: "Large", c: "Short & hard", w: [45, 50], l: [11, 14], t: "Very large erect ears above pale amber eyes" },
   { n: "Cirneco dell'Etna", o: "Italy", g: "Hound", s: "Medium", c: "Short & sleek", w: [17, 26], l: [12, 14], t: "Small tough sighthound of Sicily's volcanic slopes" },
   { n: "Azawakh", o: "Mali", g: "Hound", s: "Large", c: "Very short & fine", w: [33, 55], l: [12, 15], t: "Extreme leanness with bone structure visible through the skin" },
@@ -179,14 +179,14 @@ window.BREEDS = [
   { n: "Entlebucher Mountain Dog", o: "Switzerland", g: "Herding", s: "Medium", c: "Short & hard double", w: [40, 65], l: [11, 13], t: "Smallest of the four Swiss mountain dogs, tricolor and squarely built" }
 ];
 
-/* How likely a casual player is to know the breed by name. The quiz is text-only —
- * there is no photograph to reason from — so this is the strongest difficulty lever
+/* How likely a casual player is to know the breed by name. The quiz is text-only,
+ * and there is no photograph to reason from, so this is the strongest difficulty lever
  * available: no arrangement of decoys makes a question about a Cirneco dell'Etna
  * gentle. Every tier samples subjects by these bands, weighted toward `household`
  * at low streaks and toward the long tail at high ones.
  *
- * household — names a non-dog-person would recognize unprompted
- * known     — recognizable to anyone with passing interest
+ * household: names a non-dog-person would recognize unprompted
+ * known: recognizable to anyone with passing interest
  * anything absent from both is treated as specialist knowledge
  *
  * Names must match `n` above exactly; app.js reports any that do not resolve.
@@ -248,7 +248,7 @@ window.BREED_HINTS = {
   "German Shepherd": "The standard police and military dog worldwide, originally a sheep herder.",
   "French Bulldog": "A compact city companion that has become enormously fashionable in the last decade.",
   "Bulldog": "The stocky British national mascot, used as an emblem by sports teams and the US Marine Corps.",
-  "Standard Poodle": "The biggest of the three Poodle varieties — a serious water retriever under the show trims.",
+  "Standard Poodle": "The biggest of the three Poodle varieties, a serious water retriever under the show trims.",
   "Miniature Poodle": "The middle of the three Poodle varieties, a popular companion and obedience competitor.",
   "Toy Poodle": "The smallest of the three Poodle varieties, kept purely as a companion.",
   "Beagle": "A merry pack hound bred to trail rabbits, and the breed you meet sniffing luggage at airports.",
@@ -281,7 +281,7 @@ window.BREED_HINTS = {
   "Alaskan Malamute": "An Alaskan freighting sled dog, bred for hauling heavy loads rather than speed.",
   "Samoyed": "A white Siberian breed that both herded reindeer and pulled sleds for the Samoyedic peoples.",
   "Chow Chow": "An ancient and famously aloof Chinese breed, once a temple and hunting dog.",
-  "American Cocker Spaniel": "The more heavily coated of the two Cockers — the 'Lady' of Lady and the Tramp.",
+  "American Cocker Spaniel": "The more heavily coated of the two Cockers, the 'Lady' of Lady and the Tramp.",
   "Cavalier King Charles Spaniel": "A gentle toy spaniel named for the Stuart kings who kept them.",
   "Miniature Schnauzer": "A German farm ratter, the most compact of the three schnauzers.",
   "Bichon Frise": "A white Mediterranean companion, historically a sailors' and circus dog.",
@@ -296,7 +296,7 @@ window.BREED_HINTS = {
   "Belgian Malinois": "A Belgian herder now preferred over the German Shepherd for military and police work.",
   "Havanese": "Cuba's national dog and only native breed, a cheerful little companion.",
 
-  "English Cocker Spaniel": "The original, taller Cocker — a British gundog named for flushing woodcock.",
+  "English Cocker Spaniel": "The original, taller Cocker, a British gundog named for flushing woodcock.",
   "English Springer Spaniel": "A British gundog whose job is to spring game from cover for the guns.",
   "German Shorthaired Pointer": "A versatile German pointing gundog, hugely popular with hunters.",
   "Irish Setter": "A flashy, headstrong Irish bird dog, once a fashionable show breed.",
